@@ -330,10 +330,10 @@ const IMG_CDNS = [
   "https://new.qzycbu.cn",
   "https://pwa.eisees.com",
 ];
-const VID_CDN = "https://hls.ffxddn.cn";
+const VID_CDN = "https://op.udhhzr.cn";
 /** 备用 m3u8 域名（源站现用 op.vkjyoi.cn；签名仍用同一 auth_key 算法） */
 const VID_CDN_FALLBACKS = [
-  "https://hls.ffxddn.cn",
+  "https://op.udhhzr.cn",
   "https://op.vkjyoi.cn",
 ];
 const HLS_KEY = "RnOxyCIc5eDPFpJY";
