@@ -58,6 +58,7 @@ ALLOWED_VIDEO_HOSTS = {
     "vkjyoi.cn",
     "udhhzr.cn",
     "doudou520.online",
+    "oolrvd.cn",
 }
 
 ALLOWED_PROXY_HOSTS = ALLOWED_IMG_HOSTS | ALLOWED_VIDEO_HOSTS
