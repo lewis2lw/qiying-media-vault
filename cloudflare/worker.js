@@ -1,6 +1,6 @@
 const IMG_PUBLIC = "https://imgpublic.ycomesc.live";
 const HLS_KEY = "RnOxyCIc5eDPFpJY";
-const VIDEO_BASES = ["https://hls.ffxddn.cn", "https://op.vkjyoi.cn"];
+const VIDEO_BASES = ["https://op.udhhzr.cn", "https://op.vkjyoi.cn"];
 
 const IMAGE_HOSTS = new Set([
   "imgpublic.ycomesc.live",
@@ -12,7 +12,7 @@ const IMAGE_HOSTS = new Set([
 ]);
 
 const VIDEO_HOSTS = new Set([
-  "hls.ffxddn.cn",
+  "op.udhhzr.cn",
   "op.vkjyoi.cn",
   "qw.bgqpnx.cn",
   "as.bgqpnx.cn",
@@ -23,7 +23,7 @@ const VIDEO_HOSTS = new Set([
   "hhjd.mobi",
   "bgqpnx.cn",
   "vkjyoi.cn",
-  "ffxddn.cn",
+  "udhhzr.cn",
   "doudou520.online",
 ]);
 
