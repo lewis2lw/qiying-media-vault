@@ -45,7 +45,7 @@ ALLOWED_IMG_HOSTS = {
 
 # Video CDN hosts seen in m3u8 (playlist / crypt.key / .ts)
 ALLOWED_VIDEO_HOSTS = {
-    "hls.ffxddn.cn",
+    "op.udhhzr.cn",
     "op.vkjyoi.cn",
     "qw.bgqpnx.cn",
     "as.bgqpnx.cn",
@@ -56,7 +56,7 @@ ALLOWED_VIDEO_HOSTS = {
     "hhjd.mobi",
     "bgqpnx.cn",
     "vkjyoi.cn",
-    "ffxddn.cn",
+    "udhhzr.cn",
     "doudou520.online",
 }
 
@@ -78,8 +78,8 @@ URI_ATTR_RE = re.compile(r'URI="(https?://[^"]+)"')
 import hashlib
 
 HLS_KEY = "RnOxyCIc5eDPFpJY"
-VID_CDN_PRIMARY = "https://hls.ffxddn.cn"
-VID_CDN_ALTS = ["https://hls.ffxddn.cn", "https://op.vkjyoi.cn"]
+VID_CDN_PRIMARY = "https://op.udhhzr.cn"
+VID_CDN_ALTS = ["https://op.udhhzr.cn", "https://op.vkjyoi.cn"]
 
 
 def path_only(raw: str) -> str:
@@ -492,7 +492,7 @@ class Handler(SimpleHTTPRequestHandler):
         candidates = [raw]
         try:
             p = urllib.parse.urlparse(raw)
-            alt_hosts = ["hls.ffxddn.cn", "op.vkjyoi.cn"]
+            alt_hosts = ["op.udhhzr.cn", "op.vkjyoi.cn"]
             for h in alt_hosts:
                 if p.hostname != h:
                     candidates.append(
