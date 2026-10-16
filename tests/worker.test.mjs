@@ -32,8 +32,8 @@ test("health endpoint reports the requested hostname for custom-domain verificat
 
 test("MD5 signing matches the browser implementation", () => {
   assert.equal(md5browser("hello"), "5d41402abc4b2a76b9719d911017c592");
-  const signed = signVideoUrl("/demo/video.m3u8", "https://hls.ffxddn.cn");
-  assert.match(signed, /^https:\/\/hls\.ffxddn\.cn\/demo\/video\.m3u8\?auth_key=/);
+  const signed = signVideoUrl("/demo/video.m3u8", "https://op.udhhzr.cn");
+  assert.match(signed, /^https:\/\/op.udhhzr.cn\/demo\/video\.m3u8\?auth_key=/);
   assert.match(signed, /&v=3&time=0$/);
 });
 
@@ -46,7 +46,7 @@ test("proxy allowlist rejects unrelated hosts", () => {
 test("playlist rewrite keeps tags and proxies media URLs", () => {
   const output = rewritePlaylist(
     '#EXTM3U\n#EXT-X-KEY:METHOD=AES-128,URI="crypt.key"\nsegment-1.ts\n',
-    "https://hls.ffxddn.cn/path/index.m3u8",
+    "https://op.udhhzr.cn/path/index.m3u8",
     "https://qiying.example/api/hls?path=x"
   );
   assert.match(output, /URI="https:\/\/qiying\.example\/api\/proxy\?url=/);
