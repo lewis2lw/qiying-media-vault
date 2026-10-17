@@ -321,6 +321,8 @@ const lightboxSwipe = {
 const APP_BASE_URL = new URL(".", document.baseURI);
 const MEDIA_DATA_V2_URL = new URL("media-data/v2/", APP_BASE_URL);
 const LEGACY_POSTS_URL = new URL("media-data/posts.json", APP_BASE_URL);
+// 原帖地址：与 posts.json 的 source_url 格式一致
+const SOURCE_BASE_URL = "https://www.91cg1.com";
 const STATIC_ONLY_HOST = /\.github\.io$/i.test(location.hostname);
 const IMG_CDNS = [
   "https://imgpublic.ycomesc.live",
@@ -3434,6 +3436,7 @@ async function renderDetail(route) {
             <div class="detail-counts" aria-label="媒体数量">
               <span>${icon("image")}<strong>${post.image_count || 0}</strong> 图片</span>
               <span>${icon("video")}<strong>${post.video_count || 0}</strong> 视频</span>
+  <a class="detail-source" href="${escapeHtml(`${SOURCE_BASE_URL}/archives/${post.pid}/`)}" target="_blank" rel="noopener noreferrer">${icon("external-link")}<strong>原帖</strong></a>
             </div>
             ${
               post.description
