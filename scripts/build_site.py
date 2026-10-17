@@ -128,11 +128,21 @@ def compact_video(media: dict[str, Any]) -> dict[str, Any]:
 
 
 def detail_record(post: dict[str, Any]) -> dict[str, Any]:
-    return {
+    record: dict[str, Any] = {
         "p": int(post["pid"]),
         "i": [compact_image(item) for item in post.get("images") or []],
         "v": [compact_video(item) for item in post.get("videos") or []],
     }
+    if post.get("recommended"):
+        record["r"] = [
+            {
+                "p": int(item["pid"]),
+                "t": item.get("title") or "",
+                "c": item.get("cover") or "",
+            }
+            for item in post["recommended"]
+        ]
+    return record
 
 
 def post_time(post: dict[str, Any]) -> str:
