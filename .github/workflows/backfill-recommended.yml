@@ -1,0 +1,67 @@
+name: Backfill recommended
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: "本轮回填帖数上限（0 = 全部剩余）"
+        required: false
+        default: "3000"
+      workers:
+        description: "并行抓取线程数"
+        required: false
+        default: "8"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: backfill-recommended
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Backfill recommended
+        run: python3 backfill_recommended.py --limit "${{ inputs.limit }}" --workers "${{ inputs.workers }}" --batch 200
+
+      - name: Validate posts.json
+        run: |
+          python3 -c "import json; posts = json.load(open('media-data/posts.json')); done = sum(1 for p in posts if p.get('recommended')); print(f'posts={len(posts)} with_recommended={done}')"
+
+      - name: Run data regression tests
+        run: python -m unittest tests/test_build_site.py
+
+      - name: Commit and push if changed
+        id: push
+        run: |
+          if git diff --quiet -- media-data/posts.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "posts.json 未变化，跳过提交"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add media-data/posts.json
+            git commit -m "chore(data): backfill recommended for old posts"
+            git pull --rebase origin main
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # GITHUB_TOKEN 推送不会触发其他工作流，需显式 dispatch
+      - name: Trigger Pages + Cloudflare deploys
+        if: steps.push.outputs.changed == 'true'
+        run: |
+          gh workflow run pages.yml --ref main
+          gh workflow run deploy-cloudflare.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
