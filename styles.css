@@ -1066,6 +1066,28 @@ kbd {
   font-family: "DIN Alternate", "Avenir Next", sans-serif;
   font-size: 17px;
 }
+.detail-counts > a.detail-source {
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: var(--surface-1);
+  color: var(--link);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.detail-counts > a.detail-source strong {
+  color: inherit;
+}
+
+.detail-counts > a.detail-source:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
 
 .detail-desc {
   max-width: 66ch;
