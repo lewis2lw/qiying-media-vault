@@ -354,7 +354,14 @@ def parse_meta(pid: int, status: int, html: str) -> dict[str, Any]:
 def extract_media(html: str) -> tuple[list[dict], list[dict]]:
     m = re.search(r'itemprop="articleBody"(.*)', html, re.I | re.S)
     body = m.group(1) if m else html
-    for stop in ("post-near", "post-footer", "post-copyright", "comments", "comment-list"):
+    for stop in (
+        "post-near",
+        "post-footer",
+        "post-copyright",
+        "comments",
+        "comment-list",
+        "top_picks",  # 热门推荐栏目：与正文图集分开提取，不混入 images
+    ):
         i = body.find(stop)
         if i > 0:
             body = body[:i]
@@ -440,7 +447,45 @@ def extract_media(html: str) -> tuple[list[dict], list[dict]]:
     return images, videos
 
 
-def build_post(pid: int, meta: dict[str, Any], images: list[dict], videos: list[dict]) -> dict[str, Any]:
+def extract_recommended(html: str) -> list[dict]:
+    """热门推荐栏目：与正文图集分开，保留跳转目标帖的 pid/标题/封面。"""
+    items: list[dict] = []
+    seen: set[int] = set()
+    for tag in re.finditer(r'<a[^>]*class="top_picks_item"[^>]*>', html, re.I):
+        href = re.search(r'href="([^"]+)"', tag.group(0))
+        pid_m = re.search(r"/archives/(\d+)/", href.group(1)) if href else None
+        if not pid_m:
+            continue
+        pid = int(pid_m.group(1))
+        if pid in seen:
+            continue
+        seen.add(pid)
+        end = html.find("</a>", tag.end())
+        inner = html[tag.end() : end] if end > 0 else ""
+        title_m = re.search(r'<h4\s+class="item_title">(.*?)</h4>', inner, re.S)
+        title = (
+            html_lib.unescape(re.sub(r"<[^>]+>", "", title_m.group(1)).strip())
+            if title_m
+            else ""
+        )
+        img_m = re.search(r"loadImage\(\s*['\"]([^'\"]+)['\"]", inner)
+        if not img_m:
+            continue
+        path = urllib.parse.urlparse(img_m.group(1)).path
+        if not re.search(r"\.(jpe?g|png|webp|gif)$", path, re.I):
+            continue
+        items.append(
+            {
+                "pid": pid,
+                "title": title,
+                "cover": path,
+                "url": f"{BASE}/archives/{pid}/",
+            }
+        )
+    return items
+
+
+def build_post(pid: int, meta: dict[str, Any], images: list[dict], videos: list[dict], recommended: list[dict] | None = None) -> dict[str, Any]:
     cover = ""
     if images:
         cover = images[0].get("cover") or f"{IMG_CDN}{images[0]['path']}"
@@ -467,6 +512,7 @@ def build_post(pid: int, meta: dict[str, Any], images: list[dict], videos: list[
         "category_slugs": meta.get("category_slugs") or [],
         "tags": meta.get("tags") or [],
         "source_url": f"{BASE}/archives/{pid}/",
+        "recommended": recommended or [],
     }
     return post
 
@@ -480,11 +526,12 @@ def scrape_one(pid: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     if not meta.get("ok"):
         return None, meta
     images, videos = extract_media(html)
+    recommended = extract_recommended(html)
     if not images and not videos:
         # still keep meta-only post so title appears in 帖子 tab
-        post = build_post(pid, meta, [], [])
+        post = build_post(pid, meta, [], [], recommended)
         return post, meta
-    return build_post(pid, meta, images, videos), meta
+    return build_post(pid, meta, images, videos, recommended), meta
 
 
 def backup_file(path: Path) -> Path | None:
