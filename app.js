@@ -1079,6 +1079,16 @@ function decodeDetailVideo(raw) {
   };
 }
 
+function decodeRecommended(raw) {
+  const path = raw.c || "";
+  return {
+    pid: Number(raw.p),
+    title: raw.t || "",
+    path,
+    cover: expandCover(path),
+  };
+}
+
 function decodeModeImage(raw, sourceIndex) {
   const path = raw.q || "";
   const cover = expandCover(raw.r || path);
@@ -1172,6 +1182,7 @@ async function loadPostDetail(pid) {
     ...summary,
     images: (detail.i || []).map(decodeDetailImage),
     videos: (detail.v || []).map(decodeDetailVideo),
+    recommended: (detail.r || []).map(decodeRecommended),
   };
 }
 
@@ -3501,6 +3512,31 @@ async function renderDetail(route) {
                 .join("")}</div>`
             : messageHtml("没有媒体", "这个帖子没有可展示的图片或视频")
         }
+        ${(post.recommended || []).length
+          ? `<div class="section-heading">
+              <h2>热门推荐</h2>
+              <span>${post.recommended.length} 项</span>
+            </div>
+            <div class="rec-grid">${post.recommended
+              .map((rec) => {
+                const cands = thumbCandidates(rec.cover, rec.path);
+                return `<a class="rec-card" href="${escapeHtml(
+                  `${SOURCE_BASE_URL}/archives/${rec.pid}/`
+                )}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHtml(
+                  `原帖：${rec.title || `PID ${rec.pid}`}`
+                )}">
+                  ${
+                    cands[0]
+                      ? `<img alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer" src="${escapeHtml(
+                          cands[0]
+                        )}" data-cands="${escapeHtml(cands.join("|"))}" />`
+                      : `<div class="ph ph-failed">${icon("image-off")}<span>暂无封面</span></div>`
+                  }
+                  <span class="rec-title">${escapeHtml(rec.title || `PID ${rec.pid}`)}</span>
+                </a>`;
+              })
+              .join("")}</div>`
+          : ""}
       </article>
     `);
 
