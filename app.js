@@ -990,7 +990,7 @@ function createHlsPlayer(video, rawPath, opts) {
 /* ---------------- data ---------------- */
 
 async function fetchJSON(url) {
-  const res = await fetch(url, { cache: "force-cache" });
+  const res = await fetch(url, { cache: "no-cache" });
   if (!res.ok) throw new Error(`${url} ${res.status}`);
   return res.json();
 }
@@ -1012,7 +1012,7 @@ async function fetchCompressedJSON(url) {
   if (typeof DecompressionStream === "function") {
     try {
       const compressed = await fetch(`${url}.gz`, {
-        cache: "force-cache",
+        cache: "no-cache",
         headers: { Accept: "application/gzip, application/json;q=0.9" },
       });
       if (compressed.ok) return await parseMaybeGzipResponse(compressed);
