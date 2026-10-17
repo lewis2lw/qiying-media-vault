@@ -8,9 +8,15 @@ re-extract with the current logic (extract_media + extract_recommended).
 Only media fields are updated; all meta (title, description, author,
 categories, tags, dates) is preserved.
 
-Safe to re-run: posts that already have `recommended` are skipped
-unless --force is given. Progress is checkpointed to posts.json after
-every batch, so a killed run resumes where it left off.
+Safe to re-run: posts that already have `recommended` (including an
+empty list) or carry `backfill_skip` are skipped unless --force is
+given. Progress is checkpointed to posts.json after every batch, so a
+killed run resumes where it left off.
+
+Dead ends are marked, not retried forever: a 404, or a 200 page
+without an article body (not a post page), gets `backfill_skip: True`
+and keeps its old media. A one-off `backfill_repair.json`
+({pid: fields}) next to this script is applied first when present.
 """
 
 from __future__ import annotations
@@ -58,10 +64,19 @@ def backfill_one(post: dict[str, Any]) -> tuple[int, dict[str, Any] | None, str]
             status, html = sync.fetch(f"{sync.BASE}/archives/{pid}/")
         except Exception as e:  # noqa: BLE001
             return pid, None, f"fetch_error {e}"
-    if status == 404 or not html:
+    if status == 404:
+        # Gone from the source: mark it so later batches skip it instead
+        # of retrying the same 404 forever. Old media is kept as-is.
+        return pid, {"backfill_skip": True}, "http_404_skip"
+    if not html:
         return pid, None, f"http_{status}"
     if status != 200:
         return pid, None, f"http_{status}"
+    if 'itemprop="articleBody"' not in html:
+        # 200 but not a post page (shell/redirect/removed content):
+        # extraction would return empty media and wipe the old gallery,
+        # so mark it and keep the old record.
+        return pid, {"backfill_skip": True}, "no_article_body_skip"
     try:
         images, videos = sync.extract_media(html)
         recommended = sync.extract_recommended(html)
@@ -104,10 +119,28 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     posts = load_posts(path)
     by_pid = {int(p["pid"]): i for i, p in enumerate(posts)}
+    # One-off repair: restore fields wiped by an earlier run (see
+    # backfill_repair.json). Idempotent; applied before computing todo.
+    repair_path = Path(__file__).resolve().parent / "backfill_repair.json"
+    if repair_path.is_file():
+        repair = json.loads(repair_path.read_text(encoding="utf-8"))
+        applied = 0
+        for pid_s, fields in repair.items():
+            try:
+                pid = int(pid_s)
+            except ValueError:
+                continue
+            if pid in by_pid and isinstance(fields, dict):
+                posts[by_pid[pid]].update(fields)
+                applied += 1
+        if applied:
+            save_posts(path, posts)
+            log(f"repair applied: {applied} posts from {repair_path.name}")
     todo = [
         int(p["pid"])
         for p in posts
-        if args.force or not p.get("recommended")
+        if args.force
+        or (("recommended" not in p) and not p.get("backfill_skip"))
     ]
     if args.limit and args.limit > 0:
         todo = todo[: args.limit]
