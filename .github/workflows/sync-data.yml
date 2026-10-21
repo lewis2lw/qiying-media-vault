@@ -48,6 +48,8 @@ jobs:
       # GITHUB_TOKEN 推送不会触发其他工作流，需显式 dispatch Pages 构建
       - name: Trigger Pages rebuild
         if: steps.push.outputs.changed == 'true'
-        run: gh workflow run pages.yml --ref main
+        run: |
+          gh workflow run pages.yml --ref main
+          gh workflow run deploy-cloudflare.yml
         env:
           GH_TOKEN: ${{ github.token }}
