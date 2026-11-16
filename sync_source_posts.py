@@ -444,6 +444,12 @@ def extract_media(html: str) -> tuple[list[dict], list[dict]]:
                 }
             )
 
+    # 源站正文首图是站方推广海报（各帖内容相同、仅文件名不同），跳过首图，
+    # 否则封面和图集第一张全是同一张广告图。仅剩 1 图且无视频时保留，
+    # 避免把帖子唯一的一张内容图也丢掉（有视频时单图多为推广图，封面改走视频 pic）。
+    if len(images) > 1 or (images and videos):
+        images = images[1:]
+
     return images, videos
 
 
