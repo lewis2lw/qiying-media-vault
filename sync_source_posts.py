@@ -519,6 +519,8 @@ def build_post(pid: int, meta: dict[str, Any], images: list[dict], videos: list[
         "tags": meta.get("tags") or [],
         "source_url": f"{BASE}/archives/{pid}/",
         "recommended": recommended or [],
+        # 采集时已按新规则跳过正文首图（推广海报）；标记供 repair_covers 幂等判断
+        "first_image_skipped": True,
     }
     return post
 
