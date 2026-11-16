@@ -1,0 +1,62 @@
+name: Repair covers (skip promo first image)
+
+on:
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "只处理 date_published >= 该日期的帖子"
+        required: false
+        default: "2026-10-23"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: repair-covers
+  cancel-in-progress: false
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Repair covers
+        run: python3 repair_covers.py --since "${{ inputs.since }}"
+
+      - name: Validate posts.json
+        run: |
+          python3 -c "import json; posts = json.load(open('media-data/posts.json')); done = sum(1 for p in posts if p.get('first_image_skipped')); print(f'posts={len(posts)} first_image_skipped={done}')"
+
+      - name: Run data regression tests
+        run: python -m unittest tests/test_build_site.py
+
+      - name: Commit and push if changed
+        id: push
+        run: |
+          if git diff --quiet -- media-data/posts.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "posts.json 未变化，跳过提交"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add media-data/posts.json
+            git commit -m "chore(data): repair covers, skip promo first image since 2026-10-23"
+            git pull --rebase origin main
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Trigger Pages + Cloudflare deploys
+        if: steps.push.outputs.changed == 'true'
+        run: |
+          gh workflow run pages.yml --ref main
+          gh workflow run deploy-cloudflare.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
