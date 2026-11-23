@@ -26,6 +26,8 @@ const VIDEO_HOSTS = new Set([
   "udhhzr.cn",
   "doudou520.online",
   "oolrvd.cn",
+  "ucjosl.cn",
+  "mkimfs.cn",
 ]);
 
 const PROXY_HOSTS = new Set([...IMAGE_HOSTS, ...VIDEO_HOSTS]);
